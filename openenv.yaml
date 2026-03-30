@@ -1,0 +1,11 @@
+name: AutoSupportEnv
+version: 1.0
+
+observation_model: Observation
+action_model: Action
+reward_model: Reward
+
+tasks:
+  - easy_query
+  - angry_customer
+  - payment_issue

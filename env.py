@@ -24,5 +24,45 @@ class AutoSupportEnv:
 
     def step(self, action):
         reward = self._calculate_reward(action)
-        done = reward.score > 0.7
+        done = reward.score >= 1.0
         return self.state, reward, done, {}
+
+    
+    def _calculate_reward(self, action):
+        from models import Reward
+
+        score = 0.0
+        reason = ""
+
+        query = self.state.customer_query.lower()
+        action_type = action.action_type.lower()
+        message = action.message.lower()
+
+        
+        if "order" in query:
+            if action_type == "reply" and "order" in message:
+                score = 1.0
+                reason = "Correct order response"
+            else:
+                score = 0.2
+                reason = "Incorrect order handling"
+
+  
+        elif "money" in query or "refund" in query:
+            if action_type == "reply" and ("sorry" in message or "refund" in message):
+                score = 1.0
+                reason = "Handled angry customer correctly"
+            else:
+                score = 0.5
+                reason = "Partial handling"
+
+        
+        elif "payment" in query:
+            if action_type in ["escalate", "request_info"]:
+                score = 1.0
+                reason = "Correct payment handling"
+            else:
+                score = 0.3
+                reason = "Incorrect payment handling"
+
+        return Reward(score=score, reason=reason)

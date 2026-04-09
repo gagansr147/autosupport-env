@@ -3,19 +3,26 @@ from openai import OpenAI
 from env import AutoSupportEnv
 from models import Action
 
+
+API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
+HF_TOKEN = os.getenv("HF_TOKEN")
+
 MAX_STEPS = 5
 
 
 def get_action_from_model(observation):
 
     try:
+        
         client = OpenAI(
-            base_url="https://api.openai.com/v1",
-            api_key=os.getenv("OPENAI_API_KEY")
+            base_url=API_BASE_URL,
+            api_key=HF_TOKEN
         )
 
         prompt = f"""
         You are a professional customer support agent.
+
         Customer Query: {observation.customer_query}
         Sentiment: {observation.sentiment}
 
@@ -29,7 +36,7 @@ def get_action_from_model(observation):
         """
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=MODEL_NAME,
             messages=[
                 {"role": "system", "content": "You are a helpful customer support assistant."},
                 {"role": "user", "content": prompt}
@@ -49,7 +56,7 @@ def get_action_from_model(observation):
         return Action(action_type=action_type, message=message)
 
     except Exception:
-        # ✅ FALLBACK (VERY IMPORTANT - prevents crash)
+        
         query = observation.customer_query.lower()
 
         if "order" in query:

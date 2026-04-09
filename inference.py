@@ -1,11 +1,14 @@
 import os
-from openai import OpenAI
 from env import AutoSupportEnv
 from models import Action
 
+try:
+    from openai import OpenAI
+except:
+    OpenAI = None
 
-API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
+API_BASE_URL = os.getenv("API_BASE_URL")
+MODEL_NAME = os.getenv("MODEL_NAME")
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 MAX_STEPS = 5
@@ -13,63 +16,50 @@ MAX_STEPS = 5
 
 def get_action_from_model(observation):
 
-    try:
-        
-        client = OpenAI(
-            base_url=API_BASE_URL,
-            api_key=HF_TOKEN
-        )
+    
+    if OpenAI and API_BASE_URL and MODEL_NAME and HF_TOKEN:
+        try:
+            client = OpenAI(
+                base_url=API_BASE_URL,
+                api_key=HF_TOKEN
+            )
 
-        prompt = f"""
-        You are a professional customer support agent.
+            response = client.chat.completions.create(
+                model=MODEL_NAME,
+                messages=[
+                    {"role": "system", "content": "You are a customer support agent."},
+                    {"role": "user", "content": observation.customer_query}
+                ],
+                timeout=5   
+            )
 
-        Customer Query: {observation.customer_query}
-        Sentiment: {observation.sentiment}
+            output = response.choices[0].message.content.lower()
 
-        Decide:
-        - action_type (reply / escalate / request_info)
-        - message
+            if "escalate" in output:
+                return Action("escalate", output)
+            elif "request" in output:
+                return Action("request_info", output)
+            else:
+                return Action("reply", output)
 
-        Return strictly in format:
-        action_type: <type>
-        message: <message>
-        """
+        except Exception as e:
+            
+            print(f"[DEBUG] LLM failed: {e}", flush=True)
 
-        response = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[
-                {"role": "system", "content": "You are a helpful customer support assistant."},
-                {"role": "user", "content": prompt}
-            ]
-        )
+    
+    query = observation.customer_query.lower()
 
-        output = response.choices[0].message.content.lower()
+    if "order" in query:
+        return Action("reply", "Your order is on the way.")
 
-        action_type = "reply"
-        message = output
+    elif "money" in query or "refund" in query:
+        return Action("reply", "Sorry for the inconvenience. Your refund will be processed.")
 
-        if "escalate" in output:
-            action_type = "escalate"
-        elif "request" in output:
-            action_type = "request_info"
+    elif "payment" in query:
+        return Action("escalate", "Please share your transaction ID.")
 
-        return Action(action_type=action_type, message=message)
-
-    except Exception:
-        
-        query = observation.customer_query.lower()
-
-        if "order" in query:
-            return Action("reply", "Your order is on the way.")
-
-        elif "money" in query or "refund" in query:
-            return Action("reply", "Sorry for the inconvenience. Your refund will be processed.")
-
-        elif "payment" in query:
-            return Action("escalate", "Please share your transaction ID.")
-
-        else:
-            return Action("reply", "We will check your issue.")
+    else:
+        return Action("reply", "We will check your issue.")
 
 
 def run_task(task):

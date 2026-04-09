@@ -9,8 +9,10 @@ except:
 
 
 API_BASE_URL = os.getenv("API_BASE_URL")
-MODEL_NAME = os.getenv("MODEL_NAME")
-API_KEY = os.getenv("API_KEY")   
+API_KEY = os.getenv("API_KEY")
+
+
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 
 MAX_STEPS = 5
 
@@ -18,7 +20,7 @@ MAX_STEPS = 5
 def get_action_from_model(observation):
 
     
-    if OpenAI and API_BASE_URL and MODEL_NAME and API_KEY:
+    if OpenAI and API_BASE_URL and API_KEY:
         try:
             client = OpenAI(
                 base_url=API_BASE_URL,
@@ -28,7 +30,7 @@ def get_action_from_model(observation):
             response = client.chat.completions.create(
                 model=MODEL_NAME,
                 messages=[
-                    {"role": "system", "content": "You are a professional customer support agent."},
+                    {"role": "system", "content": "You are a customer support agent."},
                     {"role": "user", "content": observation.customer_query}
                 ],
                 timeout=5

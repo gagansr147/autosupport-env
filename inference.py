@@ -7,9 +7,10 @@ try:
 except:
     OpenAI = None
 
+
 API_BASE_URL = os.getenv("API_BASE_URL")
 MODEL_NAME = os.getenv("MODEL_NAME")
-HF_TOKEN = os.getenv("HF_TOKEN")
+API_KEY = os.getenv("API_KEY")   
 
 MAX_STEPS = 5
 
@@ -17,17 +18,17 @@ MAX_STEPS = 5
 def get_action_from_model(observation):
 
     
-    if OpenAI and API_BASE_URL and MODEL_NAME and HF_TOKEN:
+    if OpenAI and API_BASE_URL and MODEL_NAME and API_KEY:
         try:
             client = OpenAI(
                 base_url=API_BASE_URL,
-                api_key=HF_TOKEN
+                api_key=API_KEY
             )
 
             response = client.chat.completions.create(
                 model=MODEL_NAME,
                 messages=[
-                    {"role": "system", "content": "You are a customer support agent."},
+                    {"role": "system", "content": "You are a professional customer support agent."},
                     {"role": "user", "content": observation.customer_query}
                 ],
                 timeout=5

@@ -2,14 +2,6 @@ import os
 from env import AutoSupportEnv
 from models import Action
 
-SYSTEM_PROMPT = """
-You are a professional customer support agent.
-- Be polite
-- Handle angry users with apology
-- Mention refund if needed
-- Ask for details if required
-"""
-
 MAX_STEPS = 5
 
 
@@ -31,10 +23,10 @@ def get_action_from_model(observation):
         )
 
     elif "payment" in query:
-      return Action(
-        action_type="escalate",
-        message="We are escalating your issue. Please share your transaction ID."
-    )
+        return Action(
+            action_type="escalate",
+            message="We are escalating your issue. Please share your transaction ID."
+        )
 
     else:
         return Action(
@@ -42,8 +34,9 @@ def get_action_from_model(observation):
             message="We will check your issue."
         )
 
+
 def run_task(task):
-    print(f"\n Running Task: {task}")
+    print(f"[START] task={task}", flush=True)
 
     env = AutoSupportEnv(task=task)
     obs = env.reset()
@@ -55,16 +48,14 @@ def run_task(task):
 
         obs, reward, done, _ = env.step(action)
 
-        print(f"Step {step+1}")
-        print("Action:", action.action_type)
-        print("Message:", action.message)
-        print("Reward:", reward.score)
-        print("Done:", done)
+        print(f"[STEP] step={step+1} reward={reward.score}", flush=True)
 
         total_reward = max(total_reward, reward.score)
 
         if done:
             break
+
+    print(f"[END] task={task} score={total_reward} steps={step+1}", flush=True)
 
     return total_reward
 
@@ -72,18 +63,8 @@ def run_task(task):
 def main():
     tasks = ["easy_query", "angry_customer", "payment_issue"]
 
-    results = {}
-
     for task in tasks:
-        score = run_task(task)
-        results[task] = round(score, 2)
-
-    print("\n Final Results:")
-    for k, v in results.items():
-        print(f"{k}: {v}")
-
-    avg = sum(results.values()) / len(results)
-    print(f"\n Average Score: {avg:.2f}")
+        run_task(task)
 
 
 if __name__ == "__main__":

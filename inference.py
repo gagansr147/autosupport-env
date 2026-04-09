@@ -30,36 +30,35 @@ def get_action_from_model(observation):
                     {"role": "system", "content": "You are a customer support agent."},
                     {"role": "user", "content": observation.customer_query}
                 ],
-                timeout=5   
+                timeout=5
             )
 
             output = response.choices[0].message.content.lower()
 
             if "escalate" in output:
-                return Action("escalate", output)
+                return Action(action_type="escalate", message=output)
             elif "request" in output:
-                return Action("request_info", output)
+                return Action(action_type="request_info", message=output)
             else:
-                return Action("reply", output)
+                return Action(action_type="reply", message=output)
 
         except Exception as e:
-            
             print(f"[DEBUG] LLM failed: {e}", flush=True)
 
     
     query = observation.customer_query.lower()
 
     if "order" in query:
-        return Action("reply", "Your order is on the way.")
+        return Action(action_type="reply", message="Your order is on the way.")
 
     elif "money" in query or "refund" in query:
-        return Action("reply", "Sorry for the inconvenience. Your refund will be processed.")
+        return Action(action_type="reply", message="Sorry for the inconvenience. Your refund will be processed.")
 
     elif "payment" in query:
-        return Action("escalate", "Please share your transaction ID.")
+        return Action(action_type="escalate", message="Please share your transaction ID.")
 
     else:
-        return Action("reply", "We will check your issue.")
+        return Action(action_type="reply", message="We will check your issue.")
 
 
 def run_task(task):
